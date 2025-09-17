@@ -9,8 +9,8 @@ library(stringr)
 library(dplyr)
 
 # CONSTANTS 
-MUTATIONAL_SIGNATURES = c("sToL4", "sToL5", "sToL15", "sToL24")
-TAXANOMIC_RANKS = c("Coleoptera", "Chordata", "Viridiplantae", "Vespidae", "Tenthredinidae")
+MUTATIONAL_SIGNATURES = c("sToL9", "sToL13", "sToL18")
+TAXANOMIC_RANKS = c("Actiniaria", "Actinopteri", "Echinodermata", "Mollusca")
 
 # setwd
 setwd("/Users/sl666/Manuscript/My Drive/ToL_Nature/SI/SF1-4")
@@ -48,27 +48,25 @@ tr   <- read.tree(text = txt2)
 tr$tip.label <- str_replace_all(tr$tip.label, "_", " ")
 tr$tip.label <- gsub("\\^(.*?)\\^", "(\\1)", tr$tip.label)
 
-# Figure 3
+# Figure 4
 pal <- c(
-  Coleoptera = "#0100F8",
-  Chordata = "#30A2DA",
-  Viridiplantae = "#004300",
-  Vespidae = "#EE9480",
-  Tenthredinidae = "#EFD2CB"
+  Actiniaria = "#30A2DA",
+  Actinopteri = "#D796AB",
+  Echinodermata = "#95D3FF",
+  Mollusca = "#000097"
 )
 
 # Get subset of somatic mutational signature attributions
 hm <- somatic_signatures %>%
-  select(label, sToL4, sToL5, sToL15, sToL24) %>%             
+  select(label, sToL9, sToL13, sToL18) %>%             
   distinct(label, .keep_all = TRUE) %>% 
   filter(label %in% tr$tip.label) %>%   
   column_to_rownames("label")
 
 # max values
-# max(hm[,"sToL4"]) # 0.55
-# max(hm[,"sToL5"]) # 0.71
-# max(hm[,"sToL15"]) # 0.35
-# max(hm[,"sToL24"]) # 0.61
+# max(hm[,"sToL9"]) # 0.428
+# max(hm[,"sToL13"]) # 0.413
+# max(hm[,"sToL18"]) # 0.396
 
 # build annotation
 # anno <- tibble(label = org_labels) %>%
@@ -129,13 +127,13 @@ p <- ggtree(tr, layout = "circular", size = 0.25, color = "grey70") +
   )
 
 # return
-ggsave("Figure_3_alpha.pdf", plot = p, width = 7.48, height = 7.48, units = "in")
+ggsave("Figure_4_alpha.pdf", plot = p, width = 7.48, height = 7.48, units = "in")
 
 # define gradient of colours
-pal_1 <- c("#FFFFFF", "#C6DBEF", "#9ECAE1", "#6BAED6", "#4292C6", "#2171B5", "#08519C", "#08306B")
-pal_2 <- c("#FFFFFF", "#FEE6CE", "#FDBE85", "#FD8D3C", "#E6550D", "#A63603", "#7F2704")
-pal_3 <- c("#FFFFFF", "#B39DDB", "#7E57C2", "#512DA8", "#311B92")
-pal_4 <- c("#FFFFFF", "#FCE4EC", "#F48FB1", "#EC407A", "#C2185B", "#880E4F")
+pal_1 <- c("#F7FCF5","#E1F3DC","#BCE4B5","#8ED08B","#56B567","#2C944C","#05712F","#00441B")
+pal_2 <- c("#F7FBFF","#DBE9F6","#BAD6EB","#89BEDC","#539ECD","#2B7BBA","#0B559F","#08306B")
+pal_3 <- c("#FFF5EB","#FEE3C8","#FDC692","#FDA057","#F67824","#E05206","#AD3803","#7F2704")
+pal_4 <- c("#FCFBFD","#ECEBF4","#D1D2E7","#AFAED4","#8D89C0","#705EAA","#572C92","#3F007D")
 
 # layout parameters
 tile_offset <- 0.02
@@ -145,11 +143,11 @@ gap         <- 0.2
 # define grid colour
 grid_col  <- "grey70" 
 
-## add sToL4 mutational signature
+## add sToL9 mutational signature
 p <- p + guides(fill = "none", colour = "none")
 p1 <- p + new_scale_fill()
 p1 <- gheatmap(p1,
-               hm[,"sToL4", drop = F],
+               hm[,"sToL9", drop = F],
                offset = tile_offset,
                width  = tile_width,
                colnames = F,
@@ -159,12 +157,12 @@ p1 <- gheatmap(p1,
                color = grid_col
                ) +
   scale_fill_gradientn(
-    colours = pal_1, 
-    name = "sToL4", 
+    colours = pal_2, 
+    name = "sToL9", 
     na.value = "white",
-    limits  = c(0, 0.6),
-    breaks  = c(0, 0.2, 0.4, 0.6),
-    labels  = c("0", "0.2", "0.4", "0.6"),
+    limits  = c(0, 0.5),
+    breaks  = c(0, 0.1, 0.2, 0.3, 0.4, 0.5),
+    labels  = c("0", "0.1", "0.2", "0.3", "0.4", "0.5"),
     guide = guide_colorbar(
       direction = "horizontal", 
       title.position = "top",
@@ -173,10 +171,10 @@ p1 <- gheatmap(p1,
       order = 1)
   )
 
-## add sToL5 mutational signature
+## add sToL13 mutational signature
 p2 <- p1 + new_scale_fill()
 p2 <- gheatmap(p2,
-               hm[,"sToL5", drop = F],
+               hm[,"sToL13", drop = F],
                offset = tile_offset + tile_width + gap,
                width  = tile_width,
                colnames = F,
@@ -186,12 +184,12 @@ p2 <- gheatmap(p2,
                color = grid_col
                ) +
   scale_fill_gradientn(
-    colours = pal_2,
-    name = "sToL5",
+    colours = pal_3,
+    name = "sToL13",
     na.value = "white",
-    limits  = c(0, 0.8),
-    breaks  = c(0, 0.2, 0.4, 0.6, 0.8),
-    labels  = c("0", "0.2", "0.4", "0.6", "0.8"),
+    limits  = c(0, 0.5),
+    breaks  = c(0, 0.1, 0.2, 0.3, 0.4, 0.5),
+    labels  = c("0", "0.1", "0.2", "0.3", "0.4", "0.5"),
     guide = guide_colorbar(
       direction = "horizontal",
       title.position = "top",
@@ -204,9 +202,9 @@ p2 <- gheatmap(p2,
 ## add sToL15 mutational signature
 p3 <- p2 + ggnewscale::new_scale_fill()
 p3 <- gheatmap(p3,
-               hm["sToL15"],
-               offset = base_offset + 2*(band_width + gap),
-               width  = band_width,
+               hm["sToL18"],
+               offset = tile_offset + 2*(tile_width + gap),
+               width  = tile_width,
                colnames = F,
                colnames_angle = 90,
                colnames_offset_y = 0.5,
@@ -214,12 +212,12 @@ p3 <- gheatmap(p3,
                color = grid_col
                ) +
   scale_fill_gradientn(
-    colours = pal_3,
-    name = "sToL15", 
+    colours = pal_4,
+    name = "sToL18", 
     na.value = "white",
-    limits  = c(0, 0.4),
-    breaks  = c(0, 0.1, 0.2, 0.3, 0.4),
-    labels  = c("0", "0.1", "0.2", "0.3","0.4"),
+    limits  = c(0, 0.5),
+    breaks  = c(0, 0.1, 0.2, 0.3, 0.4, 0.5),
+    labels  = c("0", "0.1", "0.2", "0.3", "0.4", "0.5"),
     guide = guide_colorbar(
       direction = "horizontal",
       title.position = "top",
@@ -228,33 +226,8 @@ p3 <- gheatmap(p3,
       order = 3)
     )
 
-## add sToL24 mutational signature
-p4 <- p3 + ggnewscale::new_scale_fill()
-p4 <- gheatmap(p4,
-               hm["sToL24"],
-               offset = tile_offset + 3.03*(tile_width + gap),
-               width  = tile_offset,
-               colnames = F, colnames_angle = 90,
-               colnames_offset_y = 0.5, font.size = 2,
-               color = grid_col
-               ) +
-  scale_fill_gradientn(
-    colours = pal_4,
-    name = "sToL24",
-    na.value = "white",
-    limits  = c(0, 0.7),
-    breaks  = c(0, 0.2, 0.4, 0.6),
-    labels  = c("0", "0.2", "0.4", "0.6"),
-    guide = guide_colorbar(
-      direction = "horizontal",
-      title.position = "top",
-      barheight = unit(3, "pt"),
-      barwidth = unit(60, "pt"),
-      order = 4)
-    )
-
 # add legend
-p4 <- p4 + 
+p3 <- p3 + 
   theme(
     legend.position = "right", 
     legend.box = "vertical", 
@@ -262,7 +235,7 @@ p4 <- p4 +
   )
 
 # return plot
-ggsave("Figure_3_beta.pdf", plot = p4, width = 7.48, height = 7.48, units = "in")
+ggsave("Figure_4_beta.pdf", plot = p3, width = 7.48, height = 7.48, units = "in")
 
 
 

@@ -55,30 +55,6 @@ pal <- c(
   Viridiplantae = "#004300"
 )
 
-# pal <- c(
-#   # Yellows / Oranges
-#   "#FFDC00", "#E5AE38", "#FF8002",
-#   
-#   # Blues
-#   "#30A2DA", "#2B55B9", "#1F77B4", "#4D6EFF", "#6126FF",
-#   "#000097", "#0100F8", "#00457B", "#6E7CBB", "#888FFF",
-#   
-#   # Cyans / Teals / Aquas
-#   "#04E3C8", "#17BECF", "#01BE8A", "#00BF00", "#00E83B",
-#   "#83D371", "#91FF00", "#B4FF92",
-#   
-#   # Purples / Violets
-#   "#9467BD", "#7D00A0", "#9400F5", "#895DFF", "#520066",
-#   "#3A0183", "#A737AE", "#7E7CBB", "#AD8BB1", "#CE85FF",
-#   
-#   # Pinks / Magentas (strong, not pastel)
-#   "#FF55FF", "#DD00FF", "#FF1F83", "#F500C6", "#E377C2",
-#   "#B80080", "#84206F", "#FF798F", "#A56089", "#D796AB",
-#   
-#   # Blue-greens / Blue-purples (bridges)
-#   "#95D3FF", "#7CB2FF"
-# )
-
 # Get subset of somatic mutational signature attributions
 hm <- somatic_signatures %>%
   select(label, sToL8, sToL10, sToL41) %>%             
@@ -157,9 +133,10 @@ p <- ggtree(tr, layout = "circular", size = 0.25, color = "grey70") +
 ggsave("Extended_Data_Figure_9_alpha.pdf", plot = p, width = 7.48, height = 7.48, units = "in")
 
 # define gradient of colours
-pal_1 <- c("#FFFFFF", "#C6DBEF", "#9ECAE1", "#6BAED6", "#4292C6", "#2171B5", "#08519C", "#08306B")
-pal_2 <- c("#FFFFFF", "#FEE6CE", "#FDBE85", "#FD8D3C", "#E6550D", "#A63603", "#7F2704")
-pal_4 <- c("#FFFFFF", "#FCE4EC", "#F48FB1", "#EC407A", "#C2185B", "#880E4F")
+pal_1 <- c("#F7FCF5","#E1F3DC","#BCE4B5","#8ED08B","#56B567","#2C944C","#05712F","#00441B")
+pal_2 <- c("#F7FBFF","#DBE9F6","#BAD6EB","#89BEDC","#539ECD","#2B7BBA","#0B559F","#08306B")
+pal_3 <- c("#FFF5EB","#FEE3C8","#FDC692","#FDA057","#F67824","#E05206","#AD3803","#7F2704")
+pal_4 <- c("#FCFBFD","#ECEBF4","#D1D2E7","#AFAED4","#8D89C0","#705EAA","#572C92","#3F007D")
 
 # layout parameters
 tile_offset <- 0.02
@@ -183,7 +160,7 @@ p1 <- gheatmap(p1,
                color = grid_col
                ) +
   scale_fill_gradientn(
-    colours = pal_1, 
+    colours = pal_4, 
     name = "sToL8", 
     na.value = "white",
     limits  = c(0, 0.6),
@@ -210,7 +187,7 @@ p2 <- gheatmap(p2,
                color = grid_col
                ) +
   scale_fill_gradientn(
-    colours = pal_2,
+    colours = pal_1,
     name = "sToL10",
     na.value = "white",
     limits  = c(0, 0.4),
@@ -238,7 +215,7 @@ p3 <- gheatmap(p3,
                color = grid_col
                ) +
   scale_fill_gradientn(
-    colours = pal_4,
+    colours = pal_3,
     name = "sToL41", 
     na.value = "white",
     limits  = c(0, 0.4),

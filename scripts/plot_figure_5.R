@@ -126,10 +126,10 @@ p <- ggtree(tr, layout = "circular", size = 0.25, color = "grey70") +
 ggsave("Figure_5_alpha.pdf", plot = p, width = 7.48, height = 7.48, units = "in")
 
 # define gradient of colours
-pal_1 <- c("#FFFFFF", "#C6DBEF", "#9ECAE1", "#6BAED6", "#4292C6", "#2171B5", "#08519C", "#08306B")
-pal_2 <- c("#FFFFFF", "#FEE6CE", "#FDBE85", "#FD8D3C", "#E6550D", "#A63603", "#7F2704")
-pal_3 <- c("#FFFFFF", "#B39DDB", "#7E57C2", "#512DA8", "#311B92")
-pal_4 <- c("#FFFFFF", "#FCE4EC", "#F48FB1", "#EC407A", "#C2185B", "#880E4F")
+pal_1 <- c("#F7FCF5","#E1F3DC","#BCE4B5","#8ED08B","#56B567","#2C944C","#05712F","#00441B")
+pal_2 <- c("#F7FBFF","#DBE9F6","#BAD6EB","#89BEDC","#539ECD","#2B7BBA","#0B559F","#08306B")
+pal_3 <- c("#FFF5EB","#FEE3C8","#FDC692","#FDA057","#F67824","#E05206","#AD3803","#7F2704")
+pal_4 <- c("#FCFBFD","#ECEBF4","#D1D2E7","#AFAED4","#8D89C0","#705EAA","#572C92","#3F007D")
 
 # layout parameters
 tile_offset <- 0.02
@@ -153,7 +153,7 @@ p1 <- gheatmap(p1,
                color = grid_col
                ) +
   scale_fill_gradientn(
-    colours = pal_1, 
+    colours = pal_3,
     name = "gToL1", 
     na.value = "white",
     limits  = c(0, 1.0),
@@ -184,8 +184,8 @@ p2 <- gheatmap(p2,
     name = "gToL3",
     na.value = "white",
     limits  = c(0, 0.9),
-    breaks  = c(0, 0.2, 0.4, 0.6, 0.8),
-    labels  = c("0", "0.2", "0.4", "0.6", "0.8"),
+    breaks  = c(0, 0.2, 0.4, 0.6, 0.8, 0.9),
+    labels  = c("0", "0.2", "0.4", "0.6", "0.8", "0.9"),
     guide = guide_colorbar(
       direction = "horizontal",
       title.position = "top",
@@ -208,12 +208,12 @@ p3 <- gheatmap(p3,
                color = grid_col
                ) +
   scale_fill_gradientn(
-    colours = pal_3,
+    colours = pal_1,
     name = "gToL4", 
     na.value = "white",
     limits  = c(0, 0.7),
-    breaks  = c(0, 0.2, 0.4, 0.6),
-    labels  = c("0", "0.2", "0.4", "0.6"),
+    breaks  = c(0, 0.2, 0.4, 0.6, 0.7),
+    labels  = c("0", "0.2", "0.4", "0.6", "0.7"),
     guide = guide_colorbar(
       direction = "horizontal",
       title.position = "top",

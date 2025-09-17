@@ -127,7 +127,10 @@ p <- ggtree(tr, layout = "circular", size = 0.25, color = "grey70") +
 ggsave("Extended_Data_Figure_8_alpha.pdf", plot = p, width = 7.48, height = 7.48, units = "in")
 
 # define gradient of colours
-pal_1 <- c("#FFFFFF", "#C6DBEF", "#9ECAE1", "#6BAED6", "#4292C6", "#2171B5", "#08519C", "#08306B")
+pal_1 <- c("#F7FCF5","#E1F3DC","#BCE4B5","#8ED08B","#56B567","#2C944C","#05712F","#00441B")
+pal_2 <- c("#F7FBFF","#DBE9F6","#BAD6EB","#89BEDC","#539ECD","#2B7BBA","#0B559F","#08306B")
+pal_3 <- c("#FFF5EB","#FEE3C8","#FDC692","#FDA057","#F67824","#E05206","#AD3803","#7F2704")
+pal_4 <- c("#FCFBFD","#ECEBF4","#D1D2E7","#AFAED4","#8D89C0","#705EAA","#572C92","#3F007D")
 
 # layout parameters
 tile_offset <- 0.02
@@ -151,7 +154,7 @@ p1 <- gheatmap(p1,
                color = grid_col
                ) +
   scale_fill_gradientn(
-    colours = pal_1, 
+    colours = pal_2, 
     name = "sToL1", 
     na.value = "white",
     limits  = c(0, 0.9),
