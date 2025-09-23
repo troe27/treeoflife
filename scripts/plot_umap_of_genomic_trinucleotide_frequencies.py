@@ -71,14 +71,14 @@ def assign_umap_label(df: pd.DataFrame) -> pd.DataFrame:
 
 def generate_label_color_lookup(df: pd.DataFrame) -> Dict[str, Tuple[float, float, float]]:
     metazoa_color_lookup = {
-       'Aves (Chordata)': "#031CA6",
-       'Actinopteri (Chordata)': "#0468BF",
-       'Lepidoptera (Insecta)': "#A63603",
-       'Coleoptera (Insecta)': "#E6550D",
-       'Diptera (Insecta)': "#FBAE17",
-       'Hymenoptera (Insecta)': "#FFD92F",
-       'Mammalia (Chordata)': "#04B2D9",
-       'Mollusca': "#C04BF2"
+       'Aves (Chordata)': "#3B708A",
+       'Actinopteri (Chordata)': "#355199",
+       'Lepidoptera (Insecta)': "#9CC4A8",
+       'Coleoptera (Insecta)': "#A3843F",
+       'Diptera (Insecta)': "#5F7775",
+       'Hymenoptera (Insecta)': "#B7C37C",
+       'Mammalia (Chordata)': "#5EA8DD",
+       'Mollusca': "#9B8C5B"
     }
 
     # Group labels by kingdom
@@ -199,7 +199,7 @@ def plot_umap(
     label_color_lookup: Dict[str, Tuple[float, float, float]],
     figsize: Tuple[int, int] = (7.4, 7.4),
     point_size: int = 80,
-    alpha: float = 0.85,
+    alpha: float = 0.95,
     output_path: Path = Path("umap_plot.pdf"),
 ):
     """
@@ -300,7 +300,7 @@ def plot_umap_of_genomic_trinucleotide_frequencies(
         sample_names=sample_names,
         sample_to_label_lookup=sample_to_label_lookup,
         label_color_lookup=label_color_lookup,
-        alpha=0.95,
+        alpha=0.99,
         point_size=25,
         output_path=output_path,
     )
