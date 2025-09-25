@@ -78,7 +78,7 @@ def generate_label_color_lookup(df: pd.DataFrame) -> Dict[str, Tuple[float, floa
        'Diptera (Insecta)': "#5F7775",
        'Hymenoptera (Insecta)': "#B7C37C",
        'Mammalia (Chordata)': "#5EA8DD",
-       'Mollusca': "#9B8C5B"
+       'Mollusca': "#49EAD3"
     }
 
     # Group labels by kingdom
