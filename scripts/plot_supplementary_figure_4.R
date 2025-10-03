@@ -8,6 +8,7 @@ library(ggtreeExtra)
 library(tidyverse)
 library(stringr)
 library(dplyr)
+library(Polychrome)
 
 ## setwd
 setwd("/Users/sl666/Manuscript/My Drive/ToL_Nature/SI/SF1-3")
@@ -17,7 +18,7 @@ setwd("/Users/sl666/Manuscript/My Drive/ToL_Nature/SI/SF1-3")
 # metadata = read.csv("dtol_all_samples.taxonomic_classification.csv")
 
 # ---- CLI ----
-parser <- ArgumentParser(description = "Plot Extended Data Figure 3")
+parser <- ArgumentParser(description = "Plot Supplementary Figure 4")
 parser$add_argument(
   "--newick", 
   required = TRUE,
@@ -63,38 +64,48 @@ tr = read.tree(text=nwk)
 tr$tip.label <- str_replace_all(tr$tip.label, "_", " ")
 tr$tip.label <- gsub("\\^(.*?)\\^", "(\\1)", tr$tip.label)
 
-# ----------------By Class and Order-------------------
-pal <- c(
-  # Kingdom
-  Fungi = "#925C35", # warm brown
-  Viridiplantae = "#408145", # deep green
-  # Metazoa
-  ## Phylum: Arthropoda
-  ### Order: Insecta
-  Lepidoptera = "#9CC4A8",
-  Diptera = "#5F7775",
-  Hymenoptera = "#B7C37C",
-  Coleoptera = "#A3843F",
-  Hemiptera = "#FFDA03",
-  Trichoptera = "#D13E0C",
-  Plecoptera = "#FF8530",
-  ## Phylum: Arthropoda
-  Arachnida = "#B2CE08",
-  # Phylum: Chordata
-  Aves = "#3B708A", # navy blue
-  Actinopteri = "#355199", # blue
-  Mammalia = "#5EA8DD", # cyan
-  # Mollusca
-  Bivalvia = "#BFADE0",
-  Gastropoda = "#C4C6E5",
-  # Bryozoa
-  Gymnolaemata = "#E6AED1",
-  # Annelida
-  Clitellata = "#401476",
-  Polychaeta = "#826DB3"
+# Taxanomic rank colours 
+rank_colours <- c(
+  Anseriformes     = "#1F78B4",  # deep blue
+  Hypnales         = "#33A02C",  # green
+  Lamiales         = "#FB9A99",  # light red-pink
+  Asterales        = "#E31A1C",  # scarlet red
+  Caryophyllales   = "#FDBF6F",  # orange
+  Brassicales      = "#CAB2D6",  # lavender
+  Malpighiales     = "#6A3D9A",  # purple
+  Fagales          = "#FF7F00",  # orange-gold
+  Fabales          = "#B2DF8A",  # soft green
+  Rosales          = "#A6CEE3",  # sky blue
+  Cypriniformes    = "#B15928",  # brown
+  Perciformes      = "#66C2A5",  # teal
+  Labriformes      = "#FC8D62",  # coral
+  Pleuronectiformes= "#8DA0CB",  # periwinkle
+  Agaricales       = "#E78AC3",  # magenta
+  Hypocreales      = "#FFD92F",  # yellow
+  Lepidoptera      = "#E5C494",  # beige
+  Coleoptera       = "#B3B3B3",  # grey
+  Diptera          = "#1B9E77",  # green-teal
+  Hemiptera        = "#D95F02",  # burnt orange
+  Trichoptera      = "#7570B3",  # indigo
+  Odonata          = "#E7298A",  # fuchsia
+  Plecoptera       = "#66A61E",  # olive green
+  Hymenoptera      = "#E6AB02",  # mustard
+  Actiniaria       = "#A6761D",  # earthy brown
+  Poales           = "#666666",  # dark grey
+  Rodentia         = "#8DD3C7",  # turquoise
+  Carnivora        = "#FFFFB3",  # pale yellow
+  Artiodactyla     = "#BEBADA",  # soft lilac
+  Chiroptera       = "#FB8072",  # salmon
+  Araneae          = "#80B1D3",  # blue-grey
+  Cheilostomatida  = "#FDB462",  # light orange
+  Crassiclitellata = "#B3DE69",  # lime green
+  Phyllodocida     = "#FCCDE5",  # pink
+  Cardiida         = "#D9D9D9",  # light grey
+  Venerida         = "#BC80BD",  # violet
+  Trochida         = "#CCEBC5"   # pale mint
 )
 
-# Build data frame annotation
+# Build data e annotation
 anno <- tibble(label = tr$tip.label) %>%
   mutate(Species = str_trim(str_replace(label, "\\s*\\(.*\\)$", "")))  # drop the (...) part
 anno$Kingdom <- sapply(anno$Species,function(x){
@@ -113,20 +124,21 @@ anno <- anno %>% mutate(label_expr = get_expr_labels(anno$label))
 anno <- anno %>%
   mutate(
     ColorGroup = case_when(
-      Phylum %in% names(pal) ~ Phylum,                # use phylum if in palette
-      Order %in% names(pal) ~ Order,                # use phylum if in palette
-      Class %in% names(pal) ~ Class,                # use phylum if in palette
+      Phylum %in% names(rank_colours) ~ Phylum,                # use phylum if in rank_coloursette
+      Order %in% names(rank_colours) ~ Order,                # use phylum if in rank_coloursette
+      Class %in% names(rank_colours) ~ Class,                # use phylum if in rank_coloursette
       Kingdom == "Viridiplantae" ~ "Viridiplantae",
       Kingdom == "Fungi" ~ "Fungi",
       TRUE ~ NA_character_ 
     )
   ) %>%
   mutate(
-    ColorGroup = factor(ColorGroup, levels = names(pal))  # enforce order
+    ColorGroup = factor(ColorGroup, levels = names(rank_colours))  # enforce order
   ) %>% 
   select(label, label_expr, ColorGroup)
 
 # build data frame
+tr$tip.label = anno$label
 grp_list <- split(anno$label, anno$ColorGroup)
 hilight_df <- lapply(names(grp_list), function(g) {
   tips <- grp_list[[g]]
@@ -140,17 +152,25 @@ hilight_df <- lapply(names(grp_list), function(g) {
 # assign expression label
 tr$tip.label = anno$label_expr
 
-# dot
-p <- ggtree(tr, layout = "circular", size = 0.25, color = "#090954") +
+# plot
+p <- ggtree(tr, layout = "circular", size=0.25, color = "#090954") +
   geom_hilight(
     data = hilight_df,
     aes(node = node, fill = ColorGroup),
-    alpha=1
+    alpha=1,
+  ) +
+  geom_tiplab(
+    aes(label = label),
+    parse = TRUE,
+    family = "Helvetica",
+    size = 0.8
   ) +
   theme(
-    legend.position = "right",
+    legend.position = "bottom",
+    legend.direction = "horizontal",
     text = element_text(family = "Helvetica")
   ) +
-  scale_fill_manual(values = pal, name = "Taxonomic rank")
-p
-ggsave("Extended_Data_Figure_3_alpha.pdf", plot = p, width = 7.48, height = 7.48, units = "in") 
+  scale_fill_manual(values = rank_colours, name = "Taxanomic rank")
+ggsave("SF4.pdf", plot = p, width = 7.48, height = 7.48, units = "in")
+
+

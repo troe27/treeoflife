@@ -13,10 +13,10 @@ MUTATIONAL_SIGNATURES = c("sToL4", "sToL5", "sToL15", "sToL24")
 TAXANOMIC_RANKS = c("Coleoptera", "Chordata", "Viridiplantae", "Vespidae", "Tenthredinidae")
 
 # setwd
-setwd("/Users/sl666/Manuscript/My Drive/ToL_Nature/SI/SF1-4")
+setwd("/Users/sl666/Manuscript/My Drive/ToL_Nature/SI/SF1-3")
 
 # Load data
-txt = readLines("tree.nwk")
+nwk = readLines("tree.nwk")
 metadata <- read.csv("dtol_all_samples.taxonomic_classification.csv")
 somatic_signatures <- read.csv("somatic_mutational_signature_attributions.x0_excluded.rtol_filtered.csv", check.names = F)
 
@@ -42,19 +42,19 @@ somatic_signatures$label=sapply(somatic_signatures[,1], function(x){
 somatic_signatures$label[somatic_signatures$label=="Hemaris fuciformis"]="Hemaris fuciformis (iHemFuc2)"
 
 # Manipulate newick tree
-txt <- gsub('_', '^', txt, fixed = TRUE)
-txt2 <- gsub(" +", "_", txt)   # turn spaces inside labels into underscores
-tr   <- read.tree(text = txt2)
+nwk <- gsub('_', '^', nwk, fixed = TRUE)
+nwk <- gsub(" +", "_", nwk)   # turn spaces inside labels into underscores
+tr   <- read.tree(text = nwk)
 tr$tip.label <- str_replace_all(tr$tip.label, "_", " ")
 tr$tip.label <- gsub("\\^(.*?)\\^", "(\\1)", tr$tip.label)
 
 # Figure 3
 pal <- c(
-  Coleoptera = "#0100F8",
-  Chordata = "#30A2DA",
-  Viridiplantae = "#004300",
-  Vespidae = "#EE9480",
-  Tenthredinidae = "#EFD2CB"
+  Coleoptera = "#A3843F",
+  Chordata = "#765FA6",
+  Viridiplantae = "#408145",
+  Vespidae = "#EF9581",
+  Tenthredinidae = "#F0D3CC"
 )
 
 # Get subset of somatic mutational signature attributions
@@ -111,11 +111,11 @@ hilight_df <- lapply(names(grp_list), function(g) {
 }) %>% bind_rows()
 
 # plot
-p <- ggtree(tr, layout = "circular", size = 0.25, color = "grey70") +
+p <- ggtree(tr, layout = "circular", size = 0.25, color = "#090954") +
   geom_hilight(
     data = hilight_df,
     aes(node = node, fill = ColorGroup),
-    alpha = 0.6
+    alpha=1,
   ) + 
   scale_fill_manual(
     values = pal, 

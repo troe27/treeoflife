@@ -14,8 +14,8 @@ library(Polychrome)
 setwd("/Users/sl666/Manuscript/My Drive/ToL_Nature/SI/SF1-3")
 
 # Load data
+nwk = readLines("tree.nwk")
 metadata = read.csv("dtol_all_samples.taxonomic_classification.csv")
-txt = readLines("tree.nwk")
 
 # ---- CLI ----
 parser <- ArgumentParser(description = "Plot Supplementary Figure 3")
@@ -30,52 +30,6 @@ parser$add_argument(
   help = "Path to dtol_all_samples.taxonomic_classification.csv"
 )
 args <- parser$parse_args()
-
-pal <- c(
-  # Yellows / Oranges
-  "#FFDC00", "#E5AE38", "#FF8002", 
-  
-  # Blues
-  "#30A2DA", "#2B55B9", "#1F77B4", "#4D6EFF", "#6126FF",
-  "#000097", "#0100F8", "#00457B", "#6E7CBB", "#888FFF",
-  
-  # Cyans / Teals / Aquas
-  "#04E3C8", "#17BECF", "#01BE8A", "#00BF00", "#00E83B", 
-  "#83D371", "#91FF00", "#B4FF92", 
-  
-  # Purples / Violets
-  "#9467BD", "#7D00A0", "#9400F5", "#895DFF", "#520066",
-  "#3A0183", "#A737AE", "#7E7CBB", "#AD8BB1", "#CE85FF",
- 
-  # Pinks / Magentas (strong, not pastel)
-  "#FF55FF", "#DD00FF", "#FF1F83", "#F500C6", "#E377C2",
-  "#B80080", "#84206F", "#FF798F", "#A56089", "#D796AB",
-   
-  # Blue-greens / Blue-purples (bridges)
-  "#95D3FF", "#7CB2FF"
-)
-
-# taxanomic ranks
-taxaonomic_ranks <- c(
-  "Viridiplantae",
-  "Fungi",
-  "Lepidoptera",
-  "Diptera",
-  "Hymenoptera",
-  "Coleoptera",
-  "Hemiptera",
-  "Plecoptera",
-  "Trichoptera",
-  "Arachnida",
-  "Actinopteri",
-  "Mammalia",
-  "Aves",
-  "Clitellata",
-  "Polychaeta",
-  "Bivalvia",
-  "Gastropoda",
-  "Gymnolaemata"
-)
 
 # get parsed labels
 get_expr_labels <- function(labels){
@@ -100,42 +54,41 @@ get_expr_labels <- function(labels){
 }
 
 # Load data
+nwk = readLines(args$newick)
 metadata = read.csv(args$taxonomic_classification)
-txt = readLines(args$newick)
 
 # Manipulate data
-txt = gsub("_", "^" , txt, fixed = TRUE)
-txt2 <- gsub(" +", "_", txt)   # turn spaces inside labels into underscores
-tr = read.tree(text=txt2)
+nwk = gsub("_", "^" , nwk, fixed = TRUE)
+nwk <- gsub(" +", "_", nwk)   # turn spaces inside labels into underscores
+tr = read.tree(text=nwk)
 tr$tip.label <- str_replace_all(tr$tip.label, "_", " ")
 tr$tip.label <- gsub("\\^(.*?)\\^", "(\\1)", tr$tip.label)
 
-# ----------------By Class and Order-------------------
-set.seed(42)
-# rank_colours = c()
-# rank_colours = c("#004300", "#8C564B")
-# rank_colours = c(rank_colours, sample(pal, length(taxaonomic_ranks) - 2, replace=FALSE))
-# names(rank_colours) = taxaonomic_ranks
+# # Taxanomic rank colours
 rank_colours <- c(
-  Viridiplantae = "#004300",
-  Fungi        = "#8C564B",
-  Lepidoptera  = "#B80080",
-  Diptera      = "#FFDC00",
-  Hymenoptera  = "#895DFF",
-  Coleoptera   = "#0100F8",
-  Hemiptera    = "#E377C2",
-  Plecoptera   = "#00E83B",
-  Trichoptera  = "#9400F5",
-  Arachnida    = "#04E3C8",
-  Actinopteri  = "#30A2DA",
-  Mammalia     = "#AB7200",
-  Aves         = "#520066",
-  Clitellata   = "#84206F",
-  Polychaeta   = "#17BECF",
-  Bivalvia     = "#FF8002",
-  Gastropoda   = "#000097",
-  Gymnolaemata = "#F500C6"
+  # Kingdom: Viridiplantae
+  Bryopsida = "#F8AE15",
+  Magnoliopsida = "#066E80",
+  
+  # Kingdom: Fungi
+  Agaricomycetes = "#CE4490",
+  
+  # Kingdom: Metazoa
+  Insecta  = "#48B389",
+  Arachnida    = "#B1CB17",
+  Actinopteri  = "#355199",
+  Mammalia     = "#5EA6DD",
+  Aves         = "#3B708A",
+  # Mollusca
+  Bivalvia = "#BFADE0",
+  Gastropoda = "#C4C6E5",
+  # Bryozoa
+  Gymnolaemata = "#E6AED1",
+  # Annelida
+  Clitellata = "#401476",
+  Polychaeta = "#826DB3"
 )
+
 
 # Build data e annotation
 anno <- tibble(label = tr$tip.label) %>%
@@ -168,6 +121,7 @@ anno <- anno %>%
     ColorGroup = factor(ColorGroup, levels = names(rank_colours))  # enforce order
   ) %>% 
   select(label, label_expr, ColorGroup)
+
 # build data frame
 tr$tip.label = anno$label
 grp_list <- split(anno$label, anno$ColorGroup)
@@ -184,33 +138,11 @@ hilight_df <- lapply(names(grp_list), function(g) {
 tr$tip.label = anno$label_expr
 
 # plot
-p <- ggtree(tr, layout = "circular") +
-  theme(
-    legend.position = "right",
-    text = element_text(family = "Helvetica")
-  )
-ggsave("EXF3_alpha.pdf", plot = p, width = 10, height = 10, units = "in")
-
-# plot
-p <- ggtree(tr, layout = "circular") +
+p <- ggtree(tr, layout = "circular", size=0.25, color = "#090954") +
   geom_hilight(
     data = hilight_df,
     aes(node = node, fill = ColorGroup),
-    alpha = 0.6
-  ) +
-  theme(
-    legend.position = "right",
-    text = element_text(family = "Helvetica")
-  ) +
-  scale_fill_manual(values = rank_colours, name = "Taxanomic rank")
-ggsave("EXF3_beta.pdf", plot = p, width = 10, height = 10, units = "in")
-
-# plot
-p <- ggtree(tr, layout = "circular") +
-  geom_hilight(
-    data = hilight_df,
-    aes(node = node, fill = ColorGroup),
-    alpha = 0.6
+    alpha=1,
   ) +
   geom_tiplab(
     aes(label = label),
@@ -219,11 +151,11 @@ p <- ggtree(tr, layout = "circular") +
     size = 0.8
   ) +
   theme(
-    legend.position = "right",
+    legend.position = "bottom",
+    legend.direction = "horizontal",
     text = element_text(family = "Helvetica")
   ) +
-  # scale_fill_manual(values = pal, name = "Class and Order")
   scale_fill_manual(values = rank_colours, name = "Taxanomic rank")
-ggsave("SF3.pdf", plot = p, width = 10, height = 10, units = "in")
+ggsave("SF3.pdf", plot = p, width = 7.48, height = 7.48, units = "in")
 
 

@@ -13,8 +13,8 @@ library(dplyr)
 # setwd("/Users/sl666/Manuscript/My Drive/ToL_Nature/SI/SF1-3")
 
 # Load data
+# nwk = readLines("tree.nwk")
 # metadata = read.csv("dtol_all_samples.taxonomic_classification.csv")
-# txt = readLines("tree.nwk")
 
 # ---- CLI ----
 parser <- ArgumentParser(description = "Plot Supplementary Figure 1")
@@ -53,13 +53,13 @@ get_expr_labels <- function(labels){
 }
 
 # Load data
+nwk = readLines(args$newick)
 metadata = read.csv(args$taxonomic_classification)
-txt = readLines(args$newick)
 
 # Manipulate data
-txt = gsub("_", "^" , txt, fixed = TRUE)
-txt2 <- gsub(" +", "_", txt)   # turn spaces inside labels into underscores
-tr = read.tree(text=txt2)
+nwk = gsub("_", "^" , nwk, fixed = TRUE)
+nwk <- gsub(" +", "_", nwk)   # turn spaces inside labels into underscores
+tr = read.tree(text=nwk)
 org_labels =  tr$tip.label
 org_labels <- str_replace_all(org_labels, "_", " ")
 org_labels <- gsub("\\^(.*?)\\^", "(\\1)", org_labels)
@@ -77,9 +77,9 @@ tr$tip.label = anno$label_expr
 
 # Palette
 pal <- c(
-  Fungi = "#8C564B",
-  Metazoa = "#001F54",
-  Viridiplantae = "#004300"
+  Fungi = "#925C35",
+  Metazoa = "#ACD9D7",
+  Viridiplantae = "#408145"
 )
 
 # annotate by shade
@@ -97,10 +97,12 @@ hilight_df <- lapply(names(king_groups), function(k) {
   NULL
 }) %>% bind_rows()
 # 
-p <- ggtree(tr, layout = "circular")
-p <- p + geom_hilight(data = hilight_df,
-                      aes(node = node, fill = Kingdom),
-                      alpha = 0.6) +
+p <- ggtree(tr, layout = "circular", size = 0.25, color = "#090954")
+p <- p + geom_hilight(
+    data = hilight_df,
+    aes(node = node, fill = Kingdom),
+    alpha=1,
+  ) +
   scale_fill_manual(values = pal, name = "Kingdom") +
   geom_tiplab(
     aes(label = label),
@@ -112,48 +114,5 @@ p <- p + geom_hilight(data = hilight_df,
     legend.position = "right",
     text = element_text(family = "Helvetica")
     )
-ggsave("SF1.pdf", plot = p, width = 10, height = 10, units = "in")
+ggsave("SF1.pdf", plot = p, width = 7.48, height = 7.48, units = "in")
 
-
-# annotate by rectangle
-# p <- ggtree(tr, layout = "circular", size = 0.5) +
-#   geom_fruit(
-#     data = anno,
-#     geom = geom_tile,
-#     mapping = aes(y = label_expr, fill = Kingdom),
-#     width = 0.2, 
-#     offset = 0.02, 
-#     color = NA
-#   ) + 
-#   geom_tiplab(
-#     aes(label = label),
-#     parse = TRUE,
-#     offset = 0.37,
-#     family = "Helvetica",
-#     size = 0.8
-#   ) +
-#   theme(legend.position = "right",
-#         text = element_text(family = "Helvetica"))+
-#   scale_fill_manual(values = pal, name = "Kingdom")
-# ggsave("SF1_rectangle.pdf", plot = p, width = 10, height = 10, units = "in") 
-# 
-# # annotate by circle
-# p <- ggtree(tr, layout = "circular", size = 0.5) +
-#   geom_fruit(
-#     data    = anno,
-#     geom    = geom_point, 
-#     mapping = aes(y = label_expr, color = Kingdom),  # map to color, not fill
-#     size    = 0.3,                  # adjust circle size
-#     offset  = 0.02
-#   ) + 
-#   geom_tiplab(
-#     aes(label = label),
-#     parse = TRUE,
-#     offset = 0.3,    # smaller offset since no wide tiles
-#     family = "Helvetica",
-#     size = 0.8
-#   ) +
-#   theme(legend.position = "right",
-#         text = element_text(family = "Helvetica")) +
-#   scale_color_manual(values = pal, name = "Kingdom")
-# ggsave("SF1_point.pdf", plot = p, width = 10, height = 10, units = "in") 

@@ -10,11 +10,11 @@ library(stringr)
 library(dplyr)
 
 ## setwd
-# setwd("/Users/sl666/Manuscript/My Drive/ToL_Nature/SI/SF1-3")
+setwd("/Users/sl666/Manuscript/My Drive/ToL_Nature/SI/SF1-3")
 
 # Load data
+# nwk = readLines("tree.nwk")
 # metadata = read.csv("dtol_all_samples.taxonomic_classification.csv")
-# txt = readLines("tree.nwk")
 
 # ---- CLI ----
 parser <- ArgumentParser(description = "Plot Supplementary Figure 2")
@@ -53,26 +53,32 @@ get_expr_labels <- function(labels){
 }
 
 # Load data
+nwk = readLines("tree.nwk")
 metadata = read.csv(args$taxonomic_classification)
-txt = readLines(args$newick)
 
 # Manipulate data
-txt = gsub("_", "^" , txt, fixed = TRUE)
-txt2 <- gsub(" +", "_", txt)   # turn spaces inside labels into underscores
-tr = read.tree(text=txt2)
+nwk = gsub("_", "^" , nwk, fixed = TRUE)
+nwk <- gsub(" +", "_", nwk)   # turn spaces inside labels into underscores
+tr = read.tree(text=nwk)
 tr$tip.label <- str_replace_all(tr$tip.label, "_", " ")
 tr$tip.label <- gsub("\\^(.*?)\\^", "(\\1)", tr$tip.label)
 
 # Define palette
 pal <- c(
-  Viridiplantae = "#004300",
-  Fungi = "#8C564B",
-  Arthropoda = "#B80080",
-  Chordata = "#30A2DA",
-  Mollusca = "#000097",
-  Annelida = "#73168C",
-  Bryozoa = "#0B7A75",
-  Cnidaria = "#A9D2D5"
+  # Plant
+  Streptophyta = "#9BC449",
+  
+  # Fungi
+  Basidiomycota = "#AF6A39", # 6
+  Ascomycota = "#D6A85F", # 5
+    
+  # Animal
+  Arthropoda = "#AEB9DC",
+  Chordata = "#7460A6",
+  Mollusca = "#9A8A5B",
+  Annelida = "#EABABB",
+  Bryozoa = "#802081",
+  Cnidaria = "#CE4490"
 )
 
 # build annotation
@@ -114,11 +120,11 @@ hilight_df <- lapply(names(grp_list), function(g) {
 tr$tip.label = anno$label_expr
 
 # plot
-p <- ggtree(tr, layout = "circular") +
+p <- ggtree(tr, layout = "circular", size = 0.25, color = "#090954") +
   geom_hilight(
     data = hilight_df,
     aes(node = node, fill = ColorGroup),
-    alpha = 0.6
+    alpha=1,
   ) +
   geom_tiplab(
     aes(label = label),
@@ -127,10 +133,13 @@ p <- ggtree(tr, layout = "circular") +
     size = 0.8
   ) + 
   theme(
-    legend.position = "right",
+    legend.position = "bottom",
+    legend.direction = "horizontal",
     text = element_text(family = "Helvetica")
   ) +
   scale_fill_manual(values = pal, name = "Phylum")
-ggsave("SF2.pdf", plot = p, width = 10, height = 10, units = "in") 
+
+# return
+ggsave("SF2.pdf", plot = p, width = 7.48, height = 7.48, units = "in") 
 
 
