@@ -284,16 +284,11 @@ def load_sbs52_classification(sbs52_path: Path) -> List[str]:
 def plot_caption(sig_name: str, number: int, is_rtol_signature: bool = False):
     if is_rtol_signature:
         caption = (
-            f"Supplementary Figure {number}.\n"
-            "a) Mutational signature spectrum.\n"
-            "b) Bar plot displaying the 30 samples that exhibit the greatest exposure to the mutational signature."
+            f"Supplementary Fig. {number} | {sig_name} mutational signature. a, Mutational signature spectrum. b, Bar plot displaying the 30 samples that exhibit the greatest exposure to the mutational signature."
         )
     else:
         caption = (
-            f"Supplementary Figure {number}. {sig_name} mutational signature\n"
-            "a) Mutational signature spectrum.\n"
-            "b) Bar plot displaying the 30 samples that exhibit the greatest exposure to the mutational signature.\n"
-            "c) Phylogenetic signal of the mutational signature."
+            f"Supplementary Fig. {number} | {sig_name} mutational signature. a, Mutational signature spectrum. b, Bar plot displaying the 30 samples that exhibit the greatest exposure to the mutational signature. c, Phylogenetic signal of the mutational signature."
         )
     plot = (
         p9.ggplot()
@@ -405,7 +400,7 @@ def plot_mutational_signature_phylogenetic_signal(df: pd.DataFrame, sig_name: st
         )
         + p9.labs(
             x="Abouheif's Cmean",
-            y="q value",
+            y="q-value",
         )
         + p9.theme(
             legend_position="none",  # hide legend
@@ -437,7 +432,7 @@ def plot_somatic_mutational_signatures(
     for stol_name in stol_names:
         pw1 = pw.load_ggplot(
             plot_mutational_signature(stol_sigs_df, stol_name, False),
-            figsize=(8.27, 3.33)
+            figsize=(6.7, 2.0)
         )
         pw2 = pw.load_ggplot(
             plot_mutational_signature_attribution(
@@ -446,18 +441,18 @@ def plot_somatic_mutational_signatures(
                 id_to_species_lookup,
                 sample_count_per_species_name=sample_count_per_species_name
             ),
-            figsize=(8.27, 3.33)
+            figsize=(6.7, 2.0)
         )
         pw3 = pw.load_ggplot(
             plot_mutational_signature_phylogenetic_signal(stol_cmean_df, stol_name),
-            figsize=(8.27, 3.33)
+            figsize=(6.7, 2.0)
         )
-        pw4 = pw.load_ggplot(plot_caption(stol_name, figure_number, is_rtol_signature=False), figsize=(8.27, 0.8))
+        pw4 = pw.load_ggplot(plot_caption(stol_name, figure_number, is_rtol_signature=False), figsize=(6.7, 2.0))
 
         # Add subplot panel labels
-        pw1.case.set_title('a)', x=0, y=0.95, loc="right")
-        pw2.case.set_title('b)', x=0, y=0.95, loc="right")
-        pw3.case.set_title('c)', x=0, y=0.95, loc="right")
+        pw1.case.set_title('a', x=0, y=0.95, loc="right")
+        pw2.case.set_title('b', x=0, y=0.95, loc="right")
+        pw3.case.set_title('c', x=0, y=0.95, loc="right")
 
         # combine plots
         plot = (pw1 / pw2 / pw3) / pw4
@@ -473,7 +468,7 @@ def plot_somatic_mutational_signatures(
     for rtol_name in rtol_names:
         pw1 = pw.load_ggplot(
             plot_mutational_signature(rtol_sigs_df, rtol_name, False),
-            figsize=(8.27, 5)
+            figsize=(6.7, 3.0)
         )
         pw2 = pw.load_ggplot(
             plot_mutational_signature_attribution(
@@ -482,13 +477,13 @@ def plot_somatic_mutational_signatures(
                 id_to_species_lookup,
                 sample_count_per_species_name=sample_count_per_species_name
             ),
-            figsize=(8.27, 5)
+            figsize=(6.7, 3.0)
         )
-        pw4 = pw.load_ggplot(plot_caption(rtol_name, figure_number, is_rtol_signature=True), figsize=(8.27, 0.8))
+        pw4 = pw.load_ggplot(plot_caption(rtol_name, figure_number, is_rtol_signature=True), figsize=(6.7, 0.8))
 
         # Add subplot panel labels
-        pw1.case.set_title('a)', x=0, y=0.95, loc="right")
-        pw2.case.set_title('b)', x=0, y=0.95, loc="right")
+        pw1.case.set_title('a', x=0, y=0.95, loc="right")
+        pw2.case.set_title('b', x=0, y=0.95, loc="right")
 
         # combine plots
         plot = (pw1 / pw2) / pw4
@@ -523,7 +518,7 @@ def plot_germline_mutational_signatures(
     for gtol_name in gtol_names:
         pw1 = pw.load_ggplot(
             plot_mutational_signature(gtol_sigs_df, gtol_name, True),
-            figsize=(8.27, 3.33)
+            figsize=(6.7, 2.0)
         )
         pw2 = pw.load_ggplot(
             plot_mutational_signature_attribution(
@@ -532,13 +527,13 @@ def plot_germline_mutational_signatures(
                 id_to_species_lookup,
                 sample_count_per_species_name=sample_count_per_species_name
             ),
-            figsize=(8.27, 3.33)
+            figsize=(6.7, 2.0)
         )
         pw3 = pw.load_ggplot(
             plot_mutational_signature_phylogenetic_signal(gtol_cmean_df, gtol_name),
-            figsize=(8.27, 3.33)
+            figsize=(6.7, 2.0)
         )
-        pw4 = pw.load_ggplot(plot_caption(gtol_name, figure_number, is_rtol_signature=False), figsize=(8.27, 0.8))
+        pw4 = pw.load_ggplot(plot_caption(gtol_name, figure_number, is_rtol_signature=False), figsize=(6.7, 2.0))
 
         # Add subplot panel labels
         pw1.case.set_title('a)', x=0, y=0.95, loc="right")
