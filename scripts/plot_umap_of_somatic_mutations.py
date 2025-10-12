@@ -1,0 +1,399 @@
+#!/usr/bin/env python
+
+import argparse
+import os
+from pathlib import Path
+import sys
+from typing import Dict, List, Set, Tuple
+
+import pandas as pd
+import numpy as np
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import umap
+from sklearn.preprocessing import StandardScaler
+
+KINGDOMS = ["Viridiplantae", "Metazoa", "Fungi"]
+TAXNOMIC_RANKS_OF_INTEREST = [
+    "Fungi",
+    "Viridiplantae",
+    "Aves",
+    "Actinopteri",
+    "Mammalia",
+    "Mollusca",
+    "Lepidoptera",
+    "Coleoptera",
+    "Diptera",
+    "Hymenoptera",
+]
+
+
+def parse_args(args):
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument(
+        "-i",
+        "--fofn",
+        type=Path,
+        required=True,
+        help="file of file names (FOFN) containing paths to normalised somatic mutation counts",
+    )
+    parser.add_argument(
+        "--rtol-samples",
+        type=Path,
+        required=True,
+        help="file containing sample IDs for samples with a high-level fo artefactual mutational signature attribution, listed one per line."
+    )
+    parser.add_argument(
+        "--hdp-samples",
+        type=Path,
+        required=True,
+        help="file containing sample IDs for HDP mutational signature extraction, listed one per line."
+    )
+    parser.add_argument(
+        "--taxonomic-classification", type=Path, required=True, help="file to read taxonomic classification per sample"
+    )
+    parser.add_argument("-o", "--output", type=Path, required=True, help="file to write")
+    args = args[1:]
+    return parser.parse_args(args)
+
+
+def assign_umap_label(df: pd.DataFrame) -> pd.DataFrame:
+    labels = []
+    for _, row in df.iterrows():
+        kingdom = row.get("Kingdom")
+        phylum = row.get("Phylum")
+        _class = row.get("Class")
+        order = row.get("Order")
+
+        if kingdom == "Viridiplantae":
+            labels.append("Viridiplantae")
+        elif kingdom == "Fungi":
+            labels.append("Fungi")
+        else:
+            if any(rank in TAXNOMIC_RANKS_OF_INTEREST for rank in (phylum, _class, order)):
+                if phylum == "Arthropoda":
+                    labels.append(f"{order} ({_class})")
+                elif phylum == "Chordata":
+                    labels.append(f"{_class} ({phylum})")
+                else:
+                    labels.append(phylum)
+            else:
+                labels.append(".")
+    df.loc[:, "Label"] = labels
+
+
+def get_file_suffix(fofn_path: Path) -> str:
+    with open(fofn_path) as f:
+        strings = [line.strip() for _, line in zip(range(5), f)]
+
+    # Reverse each string
+    rev_strings = [s[::-1] for s in strings]
+
+    # Find common *prefix* of the reversed strings
+    rev_prefix = os.path.commonprefix(rev_strings)
+
+    # Find suffix
+    suffix = rev_prefix[::-1]
+    return suffix
+
+
+def generate_label_color_lookup(df: pd.DataFrame) -> Dict[str, Tuple[float, float, float]]:
+    metazoa_color_lookup = {
+        "Aves (Chordata)": "#3B708A",
+        "Actinopteri (Chordata)": "#355199",
+        "Lepidoptera (Insecta)": "#9CC4A8",
+        "Coleoptera (Insecta)": "#A3843F",
+        "Diptera (Insecta)": "#5F7775",
+        "Hymenoptera (Insecta)": "#B7C37C",
+        "Mammalia (Chordata)": "#5EA8DD",
+        "Mollusca": "#49EAD3",
+    }
+
+    # Group labels by kingdom
+    kingdom_groups = {}
+    for kingdom in KINGDOMS:
+        kingdom_groups[kingdom] = df.loc[df["Kingdom"] == kingdom, "Label"].unique().tolist()
+
+    # Assign colors within each kingdom group
+    label_color_lookup = {}
+    for (kingdom, kingdom_labels) in kingdom_groups.items():
+        if kingdom == "Viridiplantae":
+            label_color_lookup["Viridiplantae"] = "#115923"
+        elif kingdom == "Fungi":
+            label_color_lookup["Fungi"] = "#7F2704"
+        else:  # Metazoa
+            for lbl in kingdom_labels:
+                label_color_lookup[lbl] = metazoa_color_lookup[lbl]
+    return label_color_lookup
+
+
+def load_samples(samples_path: Path) -> Set[str]:
+    sample_names = []
+    with open(samples_path) as f:
+        for line in f:
+            fields = line.rstrip().split(".")
+            ref_name = fields[0]
+            sample_name = fields[1] if len(fields) > 1 else ref_name
+            sample_names.append(sample_name)
+    return set(sample_names)
+
+
+def load_somatic_mutations(
+    fofn_path: Path,
+    hdp_samples: Set[str],
+    rtol_samples: Set[str],
+    sample_to_label_lookup: Dict[str, str]
+) -> pd.DataFrame:
+    sample_names = []
+    sample_mutations = {}
+    ref_sample_lookup = {}
+    suffix = get_file_suffix(fofn_path)
+    for line in open(fofn_path).readlines():
+        file_path = line.rstrip()
+        file_prefix = file_path.replace(suffix, "")
+        fields = file_prefix.split(".")  # Split on the first dot
+        ref_name = fields[0]
+        sample_name = fields[1] if len(fields) > 1 else fields[0]
+        if sample_name in rtol_samples:
+            continue
+        if sample_name not in hdp_samples:
+            continue
+        if ref_name not in sample_to_label_lookup:
+            continue
+
+        # Read somatic mutations
+        df = pd.read_csv(file_path, sep="\t", comment="#")
+        sbs96_counts = df["normcounts"]
+        sbs96_sum = sbs96_counts.sum()
+        sbs96_frequencies = sbs96_counts / sbs96_sum
+
+        # Skip samples with fewer than 1000 mutations
+        if sbs96_sum < 1000:
+            continue
+
+        # Store data
+        sample_names.append(sample_name)
+        ref_sample_lookup[sample_name] = ref_name
+        sample_mutations[sample_name] = sbs96_frequencies
+
+    # Convert to DataFrame
+    sbs96_df = pd.DataFrame.from_dict(sample_mutations, orient="index")
+
+    # # Fill any missing trinucleotides with 0 (shouldn't happen with complete data)
+    sbs96_df = sbs96_df.fillna(0)
+    return sbs96_df, sample_names, ref_sample_lookup
+
+
+def load_taxonomic_classification(taxonomic_classification_path: Path) -> Tuple[pd.DataFrame, Dict[str, str]]:
+    # Load data frame
+    df = pd.read_csv(taxonomic_classification_path, header=0)
+    df = df.drop(columns=["Sample", "Common name"])
+    df = df.drop_duplicates(keep="first")
+
+    # Subset data frame
+    df_subset = df[~(df.iloc[:, 3:10].eq(".").any(axis=1))]
+
+    # Assign UMAP labels
+    assign_umap_label(df_subset)
+
+    # Remove samples with unassigned label
+    df_subset = df_subset[df_subset["Label"] != "."]
+
+    # Generate sample to label lookup
+    sample_to_label_lookup = dict(zip(df_subset["ref_sample"], df_subset["Label"]))
+    return df_subset, sample_to_label_lookup
+
+
+def perform_umap_analysis(
+    trinucleotide_frequency_matrix: pd.DataFrame,
+    n_neighbors: int = 15,
+    min_dist: float = 0.1,
+    n_components: int = 2,
+    random_state: int = 42,
+    standardize: bool = True,
+) -> Tuple[np.ndarray, umap.UMAP]:
+    """
+    Perform UMAP dimensionality reduction on trinucleotide frequencies
+
+    Args:
+        frequency_matrix (pd.DataFrame): Matrix of trinucleotide frequencies
+        n_neighbors (int): UMAP parameter for local neighborhood size
+        min_dist (float): UMAP parameter for minimum distance between points
+        n_components (int): Number of dimensions for output
+        random_state (int): Random seed for reproducibility
+        standardize (bool): Whether to standardize the data before UMAP
+
+    Returns:
+        np.ndarray: UMAP embedding coordinates
+        umap.UMAP: Fitted UMAP model
+    """
+    X = trinucleotide_frequency_matrix.values
+
+    if standardize:
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(X)
+    else:
+        X_scaled = X
+
+    # Initialize and fit UMAP
+    umap_model = umap.UMAP(
+        n_neighbors=n_neighbors,
+        min_dist=min_dist,
+        n_components=n_components,
+        random_state=random_state,
+        metric="euclidean",
+    )
+
+    embedding = umap_model.fit_transform(X_scaled)
+    return embedding, umap_model
+
+
+def plot_umap(
+    embedding: np.ndarray,
+    sample_names: List[str],
+    ref_sample_lookup: Dict[str, str],
+    sample_to_label_lookup: Dict[str, str],
+    label_color_lookup: Dict[str, Tuple[float, float, float]],
+    figsize: Tuple[int, int] = (7.4, 7.4),
+    point_size: int = 80,
+    alpha: float = 0.95,
+    output_path: Path = Path("umap_plot.pdf"),
+):
+    """
+    Scatter plot of UMAP colored by the assigned Label (per-sample), using label_color_lookup.
+    """
+    fig, ax = plt.subplots(figsize=figsize)
+
+    # Colors for each point
+    lbl_colors = []
+    lbls_for_legend = []
+    for sample_name in sample_names:
+        ref_name = ref_sample_lookup[sample_name]
+        lbl = sample_to_label_lookup[ref_name]
+        lbls_for_legend.append(lbl)
+        lbl_colors.append(label_color_lookup[lbl])
+
+    # Set Helvetica globally
+    mpl.rcParams["font.family"] = "Helvetica"
+
+    # Plot the UMAP embedding as a scatter plot
+    ax.scatter(
+        embedding[:, 0],  # X-coordinates (UMAP dimension 1)
+        embedding[:, 1],  # Y-coordinates (UMAP dimension 2)
+        c=lbl_colors,  # point colors (from your label_color_lookup)
+        s=point_size,  # size of each point (area, not radius)
+        alpha=alpha,  # transparency of the points (0=transparent, 1=opaque)
+        edgecolors="black",  # draw a thin black outline around each point
+        linewidth=0.5,  # thickness of that outline
+    )
+
+    # Add x-axis and y-axis labels
+    ax.set_xlabel("UMAP 1", fontsize=10)
+    ax.set_ylabel("UMAP 2", fontsize=10)
+
+    from matplotlib.lines import Line2D
+
+    unique_labels = sorted(set(lbls_for_legend))
+    legend_handles = [
+        Line2D(
+            [0],
+            [0],
+            marker="o",
+            linestyle="",
+            markerfacecolor=label_color_lookup.get(lbl, (0.6, 0.6, 0.6)),
+            markeredgecolor="black",
+            markersize=8,
+            label=lbl,
+        )
+        for lbl in unique_labels
+        if lbl != "Unknown"
+    ]
+    if legend_handles:
+        ax.legend(handles=legend_handles, bbox_to_anchor=(0.5, -0.1), loc="upper center", fontsize=7, ncol=4)
+
+    plt.tight_layout()
+    fig.savefig(output_path, dpi=300, bbox_inches="tight")
+
+
+def plot_umap_of_somatic_mutations(
+    fofn_path: Path,
+    hdp_samples_path: Path,
+    rtol_samples_path: Path,
+    taxonomic_classification_path: Path,
+    output_path: Path
+):
+    # Load hdp samples
+    hdp_samples = load_samples(hdp_samples_path)
+
+    # Load rtol samples
+    rtol_samples = load_samples(rtol_samples_path)
+
+    # Load taxonomic classification data frame and a lookup table mapping sample to label
+    taxonomic_classification_df, sample_to_label_lookup = load_taxonomic_classification(
+        taxonomic_classification_path
+    )
+
+    # Generate a colour for each label
+    label_color_lookup = generate_label_color_lookup(taxonomic_classification_df)
+
+    # Generate a data frame containing somatic mutations from each sample and the samples are labelled
+    sbs96_df, sample_names, ref_sample_lookup = load_somatic_mutations(
+        fofn_path,
+        hdp_samples,
+        rtol_samples,
+        sample_to_label_lookup
+    )
+
+    # Perform dimensionality reduction
+    n_neighbors = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    min_dists = [0.1, 0.2, 0.3, 0.4]
+    for i in n_neighbors:
+        for j in min_dists:
+            embedding, _umap_model = perform_umap_analysis(
+                sbs96_df, n_neighbors=i, min_dist=j, standardize=True
+            )
+            # Plot UMAP visualisation
+            plot_umap(
+                embedding=embedding,
+                sample_names=sample_names,
+                ref_sample_lookup=ref_sample_lookup,
+                sample_to_label_lookup=sample_to_label_lookup,
+                label_color_lookup=label_color_lookup,
+                alpha=0.99,
+                point_size=25,
+                output_path=f"{output_path.stem}.n_neighbors_{i}_min_dist_{j}.pdf",
+            )
+
+    # Perform dimensionality reduction
+    # embedding, _umap_model = perform_umap_analysis(
+    #     sbs96_df, n_neighbors=13, min_dist=0.2, standardize=True
+    # )
+
+    # Plot UMAP visualisation
+    # plot_umap(
+    #     embedding=embedding,
+    #     sample_names=sample_names,
+    #     ref_sample_lookup=ref_sample_lookup,
+    #     sample_to_label_lookup=sample_to_label_lookup,
+    #     label_color_lookup=label_color_lookup,
+    #     alpha=0.99,
+    #     point_size=25,
+    #     output_path=output_path,
+    # )
+
+
+def main() -> int:
+    options = parse_args(sys.argv)
+    plot_umap_of_somatic_mutations(
+        options.fofn,
+        options.hdp_samples,
+        options.rtol_samples,
+        options.taxonomic_classification,
+        options.output
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    exit_code = main()
+    sys.exit(exit_code)
