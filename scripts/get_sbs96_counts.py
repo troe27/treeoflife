@@ -105,8 +105,7 @@ def write_sbs96_counts(count_per_sbs96: Dict[str, int], out_path: Path):
             ubase, _, ref, _, alt, _, dbase = list(sbs96)
             sub = f"{ref}>{alt}"
             tri = f"{ubase}{ref}{dbase}"
-            outfile.write("{}\t{}\t{}\t{}\n".format(sub, tri, sbs96, count_per_sbs96[sbs96]))
-
+            outfile.write("{}\t{}\t{}\t{}\n".format(sub, tri, sbs96, count_per_sbs96.get(sbs96, 0)))
 
 def get_sbs96_counts(vcf_path: Path, ref_fasta_path: Path, target_path: Path, out_path: Path):
     count_per_sbs96 = load_sbs96_counts(vcf_path, ref_fasta_path, target_path)
